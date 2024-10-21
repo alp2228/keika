@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>競馬予約画面</title>
+
+    <!-- Firebase SDKを追加 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+    </script>
+
+    <style>
+        body {
+            background-color: #f4f4f9;
+            font-family: 'Verdana', sans-serif;
+            background-image: url('horse_race_track.jpg');
+            background-size: cover;
+        }
+
+        .container {
+            width: 80%;
+            margin: 50px auto;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            color: #2c3e50;
+            text-shadow: 2px 2px 0px #f39c12;
+        }
+
+        label {
+            font-size: 1.3em;
+            color: #27ae60;
+            display: block;
+            margin: 10px 0;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            border: 2px solid #27ae60;
+            border-radius: 5px;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.5em;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background-color: #2ecc71;
+        }
+
+        .race-label {
+            font-size: 1.5em;
+            color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>競馬レース予約フォーム</h1>
+
+        <form id="reservation-form">
+            <label for="nickname">ニックネーム:</label>
+            <input type="text" id="nickname" placeholder="あなたの名前を入力" onclick="playTapSound()">
+
+            <label for="reservation-time">希望時間:</label>
+            <select id="reservation-time" onclick="playTapSound()"></select>
+
+            <label class="race-label" for="race1">第1レース勝ち馬予想:</label>
+            <input type="text" id="race1" placeholder="勝ち馬を入力" onclick="playTapSound()">
+
+            <label class="race-label" for="race2">第2レース勝ち馬予想:</label>
+            <input type="text" id="race2" placeholder="勝ち馬を入力" onclick="playTapSound()">
+
+            <label class="race-label" for="race3">第3レース勝ち馬予想:</label>
+            <input type="text" id="race3" placeholder="勝ち馬を入力" onclick="playTapSound()">
+
+            <label class="race-label" for="race4">第4レース勝ち馬予想:</label>
+            <input type="text" id="race4" placeholder="勝ち馬を入力" onclick="playTapSound()">
+
+            <button type="button" onclick="submitReservation()">馬券を購入！</button>
+        </form>
+    </div>
+
+    <!-- タップ音ファイルと予約完了音声 -->
+    <audio id="tap-sound" src="tap-sound.mp3"></audio> <!-- タップ音 -->
+    <audio id="reservation-sound"></audio> <!-- 予約完了音 -->
+
+    <script>
+        // 時間リストを作成
+        const times = ["09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", 
+                        "11:00", "11:15", "11:30", "11:45", "12:00", "12:15", "12:30", "12:45",
+                        "13:00", "13:15", "13:30", "13:45", "14:00", "14:15", "14:30", "14:45", 
+                        "15:00", "15:15", "15:30", "15:45", "16:00"];
+
+        function updateAvailableTimes() {
+            const reservationTime = document.getElementById("reservation-time");
+            reservationTime.innerHTML = ""; // クリア
+            times.forEach(time => {
+                const option = document.createElement("option");
+                option.value = time;
+                option.text = time;
+                reservationTime.appendChild(option);
+            });
+        }
+
+        // タップ音を再生する関数
+        function playTapSound() {
+            const tapSound = document.getElementById("tap-sound");
+            tapSound.play();
+        }
+
+        // 予約完了時の音声再生
+        function playReservationSound(nickname, reservationTime) {
+            const reservationSound = document.getElementById("reservation-sound");
+            const message = `${nickname}さん、${reservationTime}までに来てね！`;
+            const speech = new SpeechSynthesisUtterance(message);
+            window.speechSynthesis.speak(speech);
+        }
+
+        function submitReservation() {
+            const nickname = document.getElementById("nickname").value;
+            const reservationTime = document.getElementById("reservation-time").value;
+            const race1 = document.getElementById("race1").value;
+            const race2 = document.getElementById("race2").value;
+            const race3 = document.getElementById("race3").value;
+            const race4 = document.getElementById("race4").value;
+
+            if (!nickname || !reservationTime || !race1 || !race2 || !race3 || !race4) {
+                alert("全てのフィールドを入力してください！");
+                return;
+            }
+
+            // Firebaseへデータを送信
+            database.ref('reservations/').push({
+                nickname: nickname,
+                reservationTime: reservationTime,
+                predictions: {
+                    race1: race1,
+                    race2: race2,
+                    race3: race3,
+                    race4: race4
+                }
+            });
+
+            alert(nickname + "さん、" + reservationTime + " の予約が完了しました！");
+            playReservationSound(nickname, reservationTime); // 音声案内を再生
+            updateAvailableTimes(); // 時間リストの更新
+        }
+
+        window.onload = updateAvailableTimes;
+    </script>
+
+</body>
+</html>

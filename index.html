@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>競馬予約管理画面</title>
+    
+    <!-- Firebase SDKを追加 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "SENDER_ID",
+        app以下は、予約情報を表示・管理できる管理画面です。予約情報は、先に送信されたデータ（Firebaseリアルタイムデータベース）をリアルタイムで取得して、表示します。
+
+### 管理画面（HTML）
+
+```html
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>競馬予約管理画面</title>
+    
+    <!-- Firebase SDKを追加 -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script>
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+      firebase.initializeApp(firebaseConfig);
+      const database = firebase.database();
+    </script>
+    
+    <style>
+        body {
+            background-color: #f4f4f9;
+            font-family: 'Verdana', sans-serif;
+        }
+
+        .container {
+            width: 80%;
+            margin: 50px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        th {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        button {
+            background-color: #e74c3c;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>競馬予約管理画面</h1>
+        <table id="reservation-list">
+            <tr>
+                <th>ニックネーム</th>
+                <th>予約時間</th>
+                <th>第1レース予想</th>
+                <th>第2レース予想</th>
+                <th>第3レース予想</th>
+                <th>第4レース予想</th>
+                <th>削除</th>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        // 管理画面に予約リストを表示する関数
+        function loadReservations() {
+            const reservationList = document.getElementById('reservation-list');
+            reservationList.innerHTML = `<tr>
+                <th>ニックネーム</th>
+                <th>予約時間</th>
+                <th>第1レース予想</th>
+                <th>第2レース予想</th>
+                <th>第3レース予想</th>
+                <th>第4レース予想</th>
+                <th>削除</th>
+              </tr>`; // テーブルのヘッダーを再描画
+
+            // Firebaseからデータを取得
+            database.ref('reservations/').on('value', function(snapshot) {
+                snapshot.forEach(function(childSnapshot) {
+                    const reservation = childSnapshot.val();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${reservation.nickname}</td>
+                        <td>${reservation.reservationTime}</td>
+                        <td>${reservation.predictions.race1}</td>
+                        <td>${reservation.predictions.race2}</td>
+                        <td>${reservation.predictions.race3}</td>
+                        <td>${reservation.predictions.race4}</td>
+                        <td><button onclick="deleteReservation('${childSnapshot.key}')">削除</button></td>
+                    `;
+                    reservationList.appendChild(row);
+                });
+            });
+        }
+
+        // 予約を削除する関数
+        function deleteReservation(key) {
+            if (confirm("本当に削除しますか？")) {
+                database.ref('reservations/' + key).remove().then(() => {
+                    alert("予約が削除されました");
+                    loadReservations(); // リストを更新
+                }).catch((error) => {
+                    alert("削除に失敗しました: " + error.message);
+                });
+            }
+        }
+
+        window.onload = loadReservations;  // ページ読み込み時に予約リストを表示
+    </script>
+
+</body>
+</html>
